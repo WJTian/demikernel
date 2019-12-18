@@ -708,11 +708,11 @@ int dmtr::dpdk_catnip_queue::push(dmtr_qtoken_t qt, const dmtr_sgarray_t &sga) {
 int dmtr::dpdk_catnip_queue::push(const dmtr_sgarray_t &sga) {
     const uint32_t number_of_segments = htonl(sga.sga_numsegs);
     DMTR_OK(nip_tcp_write(our_tcp_engine, my_tcp_connection_handle, &number_of_segments, sizeof(number_of_segments)));
-    std::cout << "Pushing sga num_seg=" << sga.sga_num_segs;
+    std::cout << "Pushing sga num_seg=" << sga.sga_numsegs;
     for (size_t i = 0; i < sga.sga_numsegs; ++i) {
         auto * const segment = &sga.sga_segs[i];
         const auto segment_length = htonl(segment->sgaseg_len);
-	std::cout << "seg length=" << segment->sgaseg_len)
+	std::cout << "seg length=" << segment->sgaseg_len;
         DMTR_OK(nip_tcp_write(our_tcp_engine, my_tcp_connection_handle, &segment_length, sizeof(segment_length)));
         DMTR_OK(nip_tcp_write(our_tcp_engine, my_tcp_connection_handle, segment->sgaseg_buf, segment->sgaseg_len));
     }
