@@ -43,7 +43,7 @@ namespace bpo = boost::program_options;
 #define IP_VERSION 0x40
 #define IP_HDRLEN  0x05 /* default IP header length == five 32-bits words. */
 #define IP_VHL_DEF (IP_VERSION | IP_HDRLEN)
-//#define DMTR_DEBUG 1
+#define DMTR_DEBUG 1
 #define DMTR_PROFILE 1
 #define TIME_ZEUS_LWIP		1
 
@@ -786,13 +786,13 @@ int dmtr::lwip_queue::push_thread(task::thread_type::yield_type &yield, task::th
         printf("send: udp src port: %d\n", ntohs(udp_hdr->src_port));
         printf("send: udp dst port: %d\n", ntohs(udp_hdr->dst_port));
         printf("send: sga_numsegs: %d\n", sga->sga_numsegs);
-        // for (size_t i = 0; i < sga->sga_numsegs; ++i) {
-        //     printf("send: buf [%lu] len: %u\n", i, sga->sga_segs[i].sgaseg_len);
-        //     printf("send: packet segment [%lu] contents: %s\n", i, reinterpret_cast<char *>(sga->sga_segs[i].sgaseg_buf));
-        // }
+        for (size_t i = 0; i < sga->sga_numsegs; ++i) {
+            printf("send: buf [%lu] len: %u\n", i, sga->sga_segs[i].sgaseg_len);
+            printf("send: packet segment [%lu] contents: %s\n", i, reinterpret_cast<char *>(sga->sga_segs[i].sgaseg_buf));
+        }
         printf("send: udp len: %d\n", ntohs(udp_hdr->dgram_len));
         printf("send: pkt len: %d\n", total_len);
-        //rte_pktmbuf_dump(stderr, pkt, total_len);
+        rte_pktmbuf_dump(stderr, pkt, total_len);
 #endif
 
         size_t pkts_sent = 0;

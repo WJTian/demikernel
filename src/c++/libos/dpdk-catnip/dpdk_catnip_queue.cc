@@ -35,14 +35,14 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <yaml-cpp/yaml.h>
-
+#include <netinet/ether.h>
 namespace bpo = boost::program_options;
 
 #define NUM_MBUFS               8191
 #define MBUF_CACHE_SIZE         250
 #define RX_RING_SIZE            128
 #define TX_RING_SIZE            512
-//#define DMTR_DEBUG 1
+#define DMTR_DEBUG 1
 #define DMTR_PROFILE 1
 
 #if DMTR_PROFILE
@@ -339,7 +339,9 @@ int dmtr::dpdk_catnip_queue::init_dpdk(int argc, char *argv[])
     struct rte_ether_addr mac = {};
     DMTR_OK(rte_eth_macaddr_get(port_id, mac));
     DMTR_OK(nip_set_my_link_addr(mac.addr_bytes));
-
+#if DMTR_DEBUG    
+    printf("my mac addr: %s\n", ether_ntoa((ether_addr *)&mac.addr_bytes));
+#endif
     our_dpdk_init_flag = true;
     our_dpdk_port_id = port_id;
     our_mbuf_pool = mbuf_pool;
@@ -483,6 +485,9 @@ int dmtr::dpdk_catnip_queue::transmit_thread(transmit_thread_type::yield_type &y
             while (0 == packets_sent) {
                 struct timeval tv = {};
                 DMTR_OK(gettimeofday(tv));
+#if DMTR_DEBUG		
+		rte_pktmbuf_dump(stderr, packet, data_len);
+#endif
                 int ret = rte_eth_tx_burst(packets_sent, dpdk_port_id, 0, &packet, 1);
                 switch (ret) {
                     default:
@@ -703,10 +708,11 @@ int dmtr::dpdk_catnip_queue::push(dmtr_qtoken_t qt, const dmtr_sgarray_t &sga) {
 int dmtr::dpdk_catnip_queue::push(const dmtr_sgarray_t &sga) {
     const uint32_t number_of_segments = htonl(sga.sga_numsegs);
     DMTR_OK(nip_tcp_write(our_tcp_engine, my_tcp_connection_handle, &number_of_segments, sizeof(number_of_segments)));
-
+    std::cout << "Pushing sga num_seg=" << sga.sga_num_segs;
     for (size_t i = 0; i < sga.sga_numsegs; ++i) {
         auto * const segment = &sga.sga_segs[i];
         const auto segment_length = htonl(segment->sgaseg_len);
+	std::cout << "seg length=" << segment->sgaseg_len)
         DMTR_OK(nip_tcp_write(our_tcp_engine, my_tcp_connection_handle, &segment_length, sizeof(segment_length)));
         DMTR_OK(nip_tcp_write(our_tcp_engine, my_tcp_connection_handle, segment->sgaseg_buf, segment->sgaseg_len));
     }
